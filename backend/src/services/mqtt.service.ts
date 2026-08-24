@@ -125,7 +125,7 @@ export class MQTTService {
     }
   }
 
-  private async ingestTelemetry(deviceId: string, data: any) {
+  public async ingestTelemetry(deviceId: string, data: any) {
     const measurements = data.measurements || [];
     if (!measurements.length) return;
 

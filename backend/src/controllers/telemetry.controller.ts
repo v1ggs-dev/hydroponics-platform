@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma, isDatabaseConnected } from "../db/prisma";
-import { inMemoryLatestTelemetry, inMemoryHistoryBuffer } from "../services/mqtt.service";
+import { inMemoryLatestTelemetry, inMemoryHistoryBuffer, mqttService } from "../services/mqtt.service";
 
 export async function getLatestTelemetry(req: Request, res: Response) {
   try {
@@ -144,3 +144,32 @@ export async function getTelemetryHistory(req: Request, res: Response) {
     });
   }
 }
+
+export async function ingestTelemetryHttp(req: Request, res: Response) {
+  try {
+    const { deviceId, measurements } = req.body;
+    if (!measurements || !Array.isArray(measurements)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payload: 'measurements' array is required.",
+      });
+    }
+
+    const targetDevice = deviceId || "esp32-01";
+    await mqttService.ingestTelemetry(targetDevice, req.body);
+
+    return res.json({
+      success: true,
+      message: "Telemetry ingested and broadcasted successfully",
+      deviceId: targetDevice,
+      measurementsCount: measurements.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
+

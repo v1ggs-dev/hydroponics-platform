@@ -1,0 +1,143 @@
+# ==============================================================================
+# Hydroponics Platform — Unified Cloud Docker Compose
+# Orchestrates: PostgreSQL, Mosquitto MQTT, Backend, AI Engine, Frontend, Cloudflared
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. PostgreSQL Database
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: hydro_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-hydroponics}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-hydroponics}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hydro_network
+
+  # ----------------------------------------------------------------------------
+  # 2. Mosquitto MQTT Broker (TCP 1883 + WebSocket 9001)
+  # ----------------------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: hydro_mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./infrastructure/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - hydro_network
+
+  # ----------------------------------------------------------------------------
+  # 3. Node.js Express Backend & WebSocket Broadcaster (:4000)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hydro_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-hydroponics}?schema=public
+      DIRECT_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-hydroponics}?schema=public
+      MQTT_BROKER_URL: mqtt://mosquitto:1883
+      MQTT_PORT: 1883
+      MQTT_CLIENT_ID: hydroponics-cloud-backend
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_2026}
+      CORS_ORIGIN: "*"
+      AI_SERVICE_URL: http://ai:8000
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    networks:
+      - hydro_network
+
+  # ----------------------------------------------------------------------------
+  # 4. AI AgroEye Pathology Microservice (FastAPI + YOLO + RAG) (:8000)
+  # ----------------------------------------------------------------------------
+  ai:
+    build:
+      context: .
+      dockerfile: ./ai/Dockerfile
+    container_name: hydro_ai
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    ports:
+      - "8000:8000"
+    networks:
+      - hydro_network
+
+  # ----------------------------------------------------------------------------
+  # 5. Next.js 14 Web Dashboard UI (:3000)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    container_name: hydro_frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/v1}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-/ws}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - hydro_network
+
+  # ----------------------------------------------------------------------------
+  # 6. Cloudflare Tunnel Daemon (Exposes services to Cloudflare without open ports)
+  # ----------------------------------------------------------------------------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: hydro_cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+      - backend
+      - ai
+      - mosquitto
+    networks:
+      - hydro_network
+
+volumes:
+  postgres_data:
+    driver: local
+  mosquitto_data:
+    driver: local
+  mosquitto_log:
+    driver: local
+
+networks:
+  hydro_network:
+    driver: bridge

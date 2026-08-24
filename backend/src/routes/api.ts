@@ -2,7 +2,7 @@ import { Router } from "express";
 import path from "path";
 import fs from "fs";
 import { getDevices, getDeviceById } from "../controllers/device.controller";
-import { getLatestTelemetry, getTelemetryHistory } from "../controllers/telemetry.controller";
+import { getLatestTelemetry, getTelemetryHistory, ingestTelemetryHttp } from "../controllers/telemetry.controller";
 import { sendActuatorCommand, getCommands } from "../controllers/command.controller";
 import { getAlerts, resolveAlert } from "../controllers/alert.controller";
 import { prisma } from "../db/prisma";
@@ -33,7 +33,8 @@ apiRouter.get("/health", async (req, res) => {
 apiRouter.get("/devices", getDevices);
 apiRouter.get("/devices/:id", getDeviceById);
 
-// 3. Telemetry
+// 3. Telemetry Ingestion & Querying
+apiRouter.post("/telemetry/ingest", ingestTelemetryHttp);
 apiRouter.get("/telemetry/latest", getLatestTelemetry);
 apiRouter.get("/telemetry/history", getTelemetryHistory);
 
