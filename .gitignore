@@ -1,0 +1,77 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# PlatformIO & Embedded Builds
+.pio
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+
+# Node & Frontend / Backend Builds
+node_modules/
+dist/
+build/
+.next/
+out/
+.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Python & Edge Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# Databases & Local Buffers
+*.db
+*.sqlite
+*.sqlite3
+edge_telemetry_buffer.db
+infrastructure/mosquitto/data/
+infrastructure/mosquitto/log/
+postgres_data/
+
+# Archives & Temporary Uploads
+*.zip
+*.tar.gz
+notion_documentation.zip
+
+# Logs
+*.log
+logs/
+
+# IDEs & OS Files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

@@ -1,0 +1,74 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Device {
+  id              String         @id // e.g. "esp32-01"
+  name            String
+  type            String         @default("controller")
+  firmwareVersion String?
+  status          String         @default("ONLINE") // "ONLINE" | "OFFLINE"
+  lastSeenAt      DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  measurements    Measurement[]
+  commands        Command[]
+  alerts          Alert[]
+
+  @@map("devices")
+}
+
+model Measurement {
+  id              BigInt         @id @default(autoincrement())
+  deviceId        String
+  sensorId        String         // "dht11-01", "tds-01", "moisture-01", "flow-01"
+  metric          String         // "air_temperature", "humidity", "tds", "substrate_moisture", "flow_rate", "water_volume"
+  value           Float
+  unit            String         // "C", "%", "ppm", "L/min", "L"
+  quality         String         @default("GOOD") // "GOOD" | "BAD"
+  timestamp       DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+
+  device          Device         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, metric, timestamp(sort: Desc)])
+  @@index([timestamp(sort: Desc)])
+  @@map("measurements")
+}
+
+model Command {
+  id              String         @id // e.g. "cmd-172389123"
+  deviceId        String
+  actuatorId      String         // "pump-01"
+  action          String         // "SET_STATE", "TOGGLE", "RESET_FAULT"
+  value           String?        // "ON", "OFF"
+  status          String         @default("PENDING") // "PENDING" | "EXECUTED" | "FAILED"
+  createdAt       DateTime       @default(now())
+  executedAt      DateTime?
+
+  device          Device         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@map("commands")
+}
+
+model Alert {
+  id              BigInt         @id @default(autoincrement())
+  deviceId        String
+  type            String         // "DRY_RUN_FAULT", "LOW_MOISTURE", "HIGH_TEMP"
+  severity        String         @default("WARNING") // "INFO" | "WARNING" | "CRITICAL"
+  message         String
+  resolved        Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  resolvedAt      DateTime?
+
+  device          Device         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, resolved])
+  @@map("alerts")
+}

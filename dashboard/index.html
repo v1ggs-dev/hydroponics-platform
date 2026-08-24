@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroEye AI — Smart Hydroponics & Pathology Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=4">
+    <!-- Chart.js for Advanced Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo">AgroEye AI</div>
+            <span class="sub-brand">Hydroponic Ecosystem Intelligence</span>
+        </div>
+
+        <!-- View Switcher Pills in Header -->
+        <div class="view-switcher-container">
+            <button id="header-btn-main" class="view-pill active">
+                <span class="pill-dot"></span> Live Overview
+            </button>
+            <button id="header-btn-analytics" class="view-pill">
+                <span class="pill-dot"></span> Analytics & Controls
+            </button>
+        </div>
+
+        <div class="header-right">
+            <div class="status-container">
+                <div class="status-indicator">
+                    <span id="ai-status-dot" class="dot loading"></span>
+                    <span class="status-label">AI Pathology</span>
+                </div>
+                <div class="status-indicator">
+                    <span id="iot-status-dot" class="dot loading"></span>
+                    <span class="status-label">IoT Controller</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Floating Right Arrow Tab (Navigates to Analytics View) -->
+    <button id="float-to-analytics-btn" class="floating-nav-btn right-nav" title="Open Analytics & IoT Controls">
+        <div class="nav-btn-content">
+            <span class="nav-btn-text">Analytics</span>
+            <div class="nav-arrow-icon">➔</div>
+        </div>
+    </button>
+
+    <!-- Floating Left Arrow Tab (Navigates back to Main View) -->
+    <button id="float-to-main-btn" class="floating-nav-btn left-nav hidden" title="Back to Live Overview">
+        <div class="nav-btn-content">
+            <div class="nav-arrow-icon">⬅</div>
+            <span class="nav-btn-text">Overview</span>
+        </div>
+    </button>
+
+    <!-- Sliding Viewport Container -->
+    <div class="slider-viewport">
+        <div id="slider-track" class="slider-track view-main-active">
+
+            <!-- ========================================================= -->
+            <!-- VIEW 1: MAIN DASHBOARD (Clean Telemetry, Camera & AI)     -->
+            <!-- ========================================================= -->
+            <div class="slider-page" id="page-main">
+                <div class="page-content">
+                    
+                    <!-- 1. Real-time Telemetry Cards -->
+                    <section class="sensor-panel">
+                        <div class="section-title-row">
+                            <div class="sensor-header">
+                                <h2>Live Hydroponic Telemetry</h2>
+                                <span id="sensor-offline-badge" class="badge offline hidden">Sensors Offline</span>
+                            </div>
+                            <div class="last-sync-text" id="last-sync-time">Syncing...</div>
+                        </div>
+                        
+                        <div class="sensor-grid">
+                            <!-- 7 Metric Cards -->
+                            <div class="sensor-card" id="card-temp">
+                                <div class="sensor-info">
+                                    <div class="sensor-label">Temperature</div>
+                                    <div class="sensor-value"><span id="val-temp">--</span> <span class="sensor-unit">°C</span></div>
+                                </div>
+                            </div>
+                            <div class="sensor-card" id="card-tds">
+                                <div class="sensor-info">
+                                    <div class="sensor-label">TDS (Nutrients)</div>
+                                    <div class="sensor-value"><span id="val-tds">--</span> <span class="sensor-unit">ppm</span></div>
+                                </div>
+                            </div>
+                            <div class="sensor-card" id="card-ph">
+                                <div class="sensor-info">
+                                    <div class="sensor-label">pH Level</div>
+                                    <div class="sensor-value"><span id="val-ph">--</span> <span class="sensor-unit">pH</span></div>
+                                </div>
+                            </div>
+                            <div class="sensor-card" id="card-moist">
+                                <div class="sensor-info">
+                                    <div class="sensor-label">Substrate Moisture</div>
+                                    <div class="sensor-value"><span id="val-moist">--</span> <span class="sensor-unit">%</span></div>
+                                </div>
+                            </div>
+                            <div class="sensor-card" id="card-hum">
+                                <div class="sensor-info">
+                                    <div class="sensor-label">Air Humidity</div>
+                                    <div class="sensor-value"><span id="val-hum">--</span> <span class="sensor-unit">%</span></div>
+                                </div>
+                            </div>
+                            <div class="sensor-card" id="card-flow">
+                                <div class="sensor-info">
+                                    <div class="sensor-label">Water Flow</div>
+                                    <div class="sensor-value"><span id="val-flow">--</span> <span class="sensor-unit">L/min</span></div>
+                                </div>
+                            </div>
+                            <div class="sensor-card" id="card-vol">
+                                <div class="sensor-info">
+                                    <div class="sensor-label">Total Volume</div>
+                                    <div class="sensor-value"><span id="val-vol">--</span> <span class="sensor-unit">L</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. Plant Vision AI & Live Classification -->
+                    <div class="main-content">
+                        <!-- Left: Camera Feed -->
+                        <section class="upload-section glass-panel">
+                            <h2>Plant Pathology Optical Feed</h2>
+                            <div id="camera-container" class="drop-zone">
+                                <video id="webcam-video" autoplay playsinline muted></video>
+                                <canvas id="snapshot-canvas" hidden></canvas>
+                                <img id="image-preview" class="hidden" alt="Snapshot">
+                            </div>
+                            <div class="camera-controls">
+                                <button id="analyze-btn" class="btn primary-btn">
+                                    <span class="btn-text">Capture & Analyze Plant</span>
+                                    <span class="btn-spinner hidden"></span>
+                                </button>
+                                <button id="reset-cam-btn" class="btn secondary-btn hidden">
+                                    Reset Camera
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- Right: AI Classification Results -->
+                        <section class="results-section glass-panel">
+                            <h2>AI Classification Results</h2>
+                            <div id="classification-results" class="results-content empty">
+                                <p class="placeholder-text">Capture a leaf snapshot to trigger Deep Learning pathology classification.</p>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- 3. AI Recommendations -->
+                    <section class="recommendation-section glass-panel">
+                        <h2>Agronomic Pathology Recommendations</h2>
+                        <div id="recommendation-content" class="recommendation-content empty">
+                            <p class="placeholder-text">Expert treatment protocols and bio-nutrient recommendations will appear here after analysis.</p>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- VIEW 2: ANALYTICS & IOT CONTROL HUB (Slide-in View)       -->
+            <!-- ========================================================= -->
+            <div class="slider-page" id="page-analytics">
+                <div class="page-content">
+                    
+                    <!-- Agronomic Health Indices & IoT Remote Control Switchboard -->
+                    <div class="dashboard-dual-row">
+                        <!-- Health & VPD Indices Card -->
+                        <section class="glass-panel agronomic-card">
+                            <div class="panel-header-row">
+                                <h2>Agronomic & System Health</h2>
+                                <span id="health-badge" class="badge low">OPTIMAL</span>
+                            </div>
+                            <div class="agronomic-grid">
+                                <!-- Overall Health Score Gauge -->
+                                <div class="health-score-block">
+                                    <div class="radial-gauge-container">
+                                        <svg class="radial-svg" viewBox="0 0 100 100">
+                                            <circle class="radial-bg" cx="50" cy="50" r="40" />
+                                            <circle id="health-circle-bar" class="radial-bar" cx="50" cy="50" r="40" />
+                                        </svg>
+                                        <div class="radial-center-text">
+                                            <span id="health-score-val">96</span><span class="radial-pct">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="gauge-caption">System Health Index</div>
+                                </div>
+
+                                <!-- VPD & Transpiration Rate -->
+                                <div class="vpd-block">
+                                    <div class="vpd-header">
+                                        <span class="vpd-title">Vapor Pressure Deficit (VPD)</span>
+                                        <span id="vpd-status-badge" class="status-pill green">IDEAL TRANSPIRATION</span>
+                                    </div>
+                                    <div class="vpd-value-row">
+                                        <span id="vpd-val">1.15</span> <span class="vpd-unit">kPa</span>
+                                    </div>
+                                    <p class="vpd-desc" id="vpd-description">
+                                        Stomata are actively transpiring with optimal nutrient uptake. Low fungal pathogen pressure.
+                                    </p>
+                                    <div class="vpd-scale-bar">
+                                        <div id="vpd-indicator-marker" class="vpd-marker" style="left: 45%;"></div>
+                                    </div>
+                                    <div class="vpd-scale-labels">
+                                        <span>0.4 (Under)</span>
+                                        <span>1.0 (Optimal)</span>
+                                        <span>1.6+ (Stress)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- IoT Remote Control Center -->
+                        <section class="glass-panel control-switchboard">
+                            <div class="panel-header-row">
+                                <h2>IoT Remote Actuator Controls</h2>
+                                <span id="controller-mode-badge" class="badge low">EDGE CONNECTED</span>
+                            </div>
+                            <div class="controls-list">
+                                <!-- Pump Switch -->
+                                <div class="control-tile">
+                                    <div class="tile-info">
+                                        <div class="tile-title">Nutrient Pump Relay (GPIO 26)</div>
+                                        <div class="tile-sub" id="pump-state-text">State: Standby / Idle</div>
+                                    </div>
+                                    <button id="toggle-pump-btn" class="switch-btn off">
+                                        <span class="switch-knob"></span>
+                                        <span class="switch-label">START PUMP</span>
+                                    </button>
+                                </div>
+
+                                <!-- Auto Irrigation Toggle -->
+                                <div class="control-tile">
+                                    <div class="tile-info">
+                                        <div class="tile-title">Autonomous Smart Irrigation</div>
+                                        <div class="tile-sub">Moisture-triggered automated dosing</div>
+                                    </div>
+                                    <button id="toggle-auto-btn" class="switch-btn on">
+                                        <span class="switch-knob"></span>
+                                        <span class="switch-label">AUTO ACTIVE</span>
+                                    </button>
+                                </div>
+
+                                <!-- Safety Reset / Emergency Stop -->
+                                <div class="control-tile danger-tile">
+                                    <div class="tile-info">
+                                        <div class="tile-title">Safety Interlock & Alarm</div>
+                                        <div class="tile-sub" id="safety-status-text">Interlock: Normal (No Faults)</div>
+                                    </div>
+                                    <button id="reset-safety-btn" class="action-mini-btn">
+                                        Clear Faults
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="command-feedback" id="command-feedback-msg">
+                                Ready to dispatch MQTT commands to esp32-env
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Interactive Analytics & Trend Charts -->
+                    <section class="glass-panel analytics-panel">
+                        <div class="analytics-header">
+                            <div>
+                                <h2>Telemetry Analytics & Trend History</h2>
+                                <span class="analytics-sub">Correlated real-time data curves & optimal growth zones</span>
+                            </div>
+                            <div class="time-filter-buttons">
+                                <button class="time-btn active" data-range="1h">1 Hour</button>
+                                <button class="time-btn" data-range="6h">6 Hours</button>
+                                <button class="time-btn" data-range="24h">24 Hours</button>
+                                <button class="time-btn" data-range="7d">7 Days</button>
+                            </div>
+                        </div>
+
+                        <div class="charts-grid">
+                            <!-- Water Chemistry Chart -->
+                            <div class="chart-container-card">
+                                <div class="chart-card-title">
+                                    <span>Water Chemistry: TDS (ppm) vs pH Balance</span>
+                                    <span class="chart-legend-badge">Dual-Axis</span>
+                                </div>
+                                <div class="canvas-wrapper">
+                                    <canvas id="waterChemistryChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Climate Environment Chart -->
+                            <div class="chart-container-card">
+                                <div class="chart-card-title">
+                                    <span>Climate Environment: Temperature vs Humidity</span>
+                                    <span class="chart-legend-badge">Dynamic Curve</span>
+                                </div>
+                                <div class="canvas-wrapper">
+                                    <canvas id="climateChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- AI Vision Scan History & Audit Log -->
+                    <section class="glass-panel history-panel">
+                        <div class="panel-header-row">
+                            <div>
+                                <h2>AI Vision Inspection Log & Pathology Timeline</h2>
+                                <span class="analytics-sub">Saved diagnostic records and treatment verification timeline</span>
+                            </div>
+                            <button id="clear-history-btn" class="btn-ghost">Clear Log</button>
+                        </div>
+                        
+                        <div id="scan-history-container" class="history-grid empty">
+                            <div class="history-empty-placeholder">
+                                No plant inspection snapshots saved yet. Capture and analyze leaves to build your crop health timeline.
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>AgroEye AI Ecosystem &copy; 2026 — Distributed Hydroponics IoT Controller & Neural Pathology Engine</p>
+    </footer>
+
+    <script src="app.js?v=4"></script>
+</body>
+</html>
