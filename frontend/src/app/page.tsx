@@ -16,11 +16,11 @@ import {
   AgronomicRecommendation,
   ScanRecord,
 } from "../types/telemetry";
-
-const API_IOT = "http://localhost:4000/api/v1";
-const API_AI = "http://localhost:8000";
+import { getApiBaseUrl, getAiBaseUrl } from "../lib/api";
 
 export default function AgroEyeDashboard() {
+  const API_IOT = getApiBaseUrl();
+  const API_AI = getAiBaseUrl();
   const [activeView, setActiveView] = useState<"main" | "analytics">("main");
   const [aiStatus, setAiStatus] = useState<"online" | "offline" | "loading">("loading");
   const [iotStatus, setIotStatus] = useState<"online" | "offline" | "loading">("loading");

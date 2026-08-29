@@ -2,9 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { LatestTelemetryMap, AlertItem, EdgeHealth } from "../types/telemetry";
-import { fetchLatestTelemetry, fetchAlerts } from "../lib/api";
-
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000/ws";
+import { fetchLatestTelemetry, fetchAlerts, getWsBaseUrl } from "../lib/api";
 
 export function useTelemetry(deviceId: string = "esp32-01") {
   const [telemetry, setTelemetry] = useState<LatestTelemetryMap>({});
@@ -39,7 +37,8 @@ export function useTelemetry(deviceId: string = "esp32-01") {
       if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
       try {
-        const ws = new WebSocket(WS_URL);
+        const wsUrl = getWsBaseUrl();
+        const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
         ws.onopen = () => {
